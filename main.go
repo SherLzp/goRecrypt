@@ -1,16 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
-	_, pubKey := GenerateKeys()
-	aPriKey, _ := GenerateKeys()
-	cipherText, pubE, pubV, s := Encrypt("Hello", pubKey)
-	fmt.Println(cipherText)
-	fmt.Println(pubE)
-	fmt.Println(pubV)
-	fmt.Println(s)
-	rk, pubX := ReKeyGen(aPriKey, pubKey)
-	fmt.Println(rk)
-	fmt.Println(pubX)
+	aPriKey, aPubKey := GenerateKeys()
+	bPriKey, bPubKey := GenerateKeys()
+	cipherText, capsule := Encrypt("Hello", aPubKey)
+	fmt.Println("ciphereText:", cipherText)
+	rk, pubX := ReKeyGen(aPriKey, bPubKey)
+	newCapsule := ReEncryption(rk, capsule)
+	key := RecreateKey(bPriKey, newCapsule, &pubX)
+	plainText := Decrypt(cipherText, key)
+	fmt.Println(string(plainText))
 }
