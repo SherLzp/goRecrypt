@@ -1,4 +1,4 @@
-package main
+package goRecrypt
 
 import (
 	"crypto/ecdsa"

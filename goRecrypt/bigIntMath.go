@@ -1,4 +1,4 @@
-package main
+package goRecrypt
 
 import "math/big"
 
@@ -10,7 +10,8 @@ func BigIntAdd(a, b *big.Int) (res *big.Int) {
 
 func BigIntSub(a, b *big.Int) (res *big.Int) {
 	res = new(big.Int)
-	res.Sub(a, b).Mod(res, N)
+	res.Sub(a, b)
+	res.Mod(res, N)
 	return
 }
 
