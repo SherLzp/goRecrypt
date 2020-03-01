@@ -4,33 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/hex"
-	"golang.org/x/crypto/sha3"
 	"math/big"
 	"strings"
 )
-
-func GenerateKeyPair() (string, string, error) {
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return "", "", err
-	}
-	publicKeyBytes, _ := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	privateKeyBytes, _ := x509.MarshalECPrivateKey(privateKey)
-	privateKeyStr := hex.EncodeToString(privateKeyBytes)
-	publicKeyStr := hex.EncodeToString(publicKeyBytes)
-	return privateKeyStr, publicKeyStr, nil
-}
-
-func HashMessage(message string) (string) {
-	shaInst := sha3.New256()
-	shaInst.Write([]byte(message))
-	result := shaInst.Sum(nil)
-	return hex.EncodeToString(result)
-}
 
 func Sign(privateKeyStr string, messageHash string) (string, error) {
 	privateKeyBytes, err := hex.DecodeString(privateKeyStr)
