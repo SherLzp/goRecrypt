@@ -46,20 +46,39 @@ package main
 
 import (
 	"fmt"
-	"github.com/SherLzp/goRecrypt/goRecrypt"
+	"goRecrypt/curve"
+	"goRecrypt/recrypt"
 )
 
-func main{
-    aPriKey, aPubKey := goRecrypt.GenerateKeys()
-	bPriKey, bPubKey := goRecrypt.GenerateKeys()
-	m := "Hello Proxy Re-Encryption"
-	cipherText, capsule := goRecrypt.Encrypt(m, aPubKey)
+func main() {
+	// Alice Generate Alice key-pair
+	aPriKey, aPubKey, _ := curve.GenerateKeys()
+	// Bob Generate Bob key-pair
+	bPriKey, bPubKey, _ := curve.GenerateKeys()
+	// plain text
+	m := "Hello, Proxy Re-Encryption"
+	// Alice encrypts to get cipherText and capsule
+	cipherText, capsule, err := recrypt.Encrypt(m, aPubKey)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println("ciphereText:", cipherText)
-	rk, pubX := goRecrypt.ReKeyGen(aPriKey, bPubKey)
-	fmt.Println("rk:", rk)
-	newCapsule := goRecrypt.ReEncryption(rk, capsule)
-	key := goRecrypt.RecreateKey(bPriKey, newCapsule, &pubX)
-	plainText := goRecrypt.Decrypt(cipherText, key)
+	// Alice generates re-encryption key
+	rk, pubX, err := recrypt.ReKeyGen(aPriKey, bPubKey)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// Server executes re-encrypt
+	newCapsule, errStr := recrypt.ReEncryption(rk, capsule)
+	if errStr != "" {
+		fmt.Println(errStr)
+	}
+	// Bob decrypts the cipherText
+	plainText, err := recrypt.Decrypt(bPriKey, newCapsule, pubX, cipherText)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// get plainText
 	fmt.Println("plainText:", string(plainText))
 }
 ```
@@ -67,9 +86,10 @@ func main{
 ### Result
 
 ```go
-ciphereText: [171 87 67 89 115 56 249 20 175 99 198 164 68 80 106 118 72 202 162 201 182 90 61 110 186 252 246 7 128 253 145 145]
-rk: 55936314470925812361865801892579587803315572011336880167651467596145742731730
-plainText: Hello Proxy Re-Encryption
+origin message: Hello, Proxy Re-Encryption
+ciphereText: 384896d3ec76ae15b76195154e20ef069d5984d1bbac436d30df928af043106f09b08d50ef7562bf44fa
+rk: 63105820755377318789444476285016130489439585789958062421755769345359288283133
+plainText: Hello, Proxy Re-Encryption
 ```
 
 Thanks! 

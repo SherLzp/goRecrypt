@@ -2,17 +2,40 @@ package main
 
 import (
 	"fmt"
-	"goRecrypt/goRecrypt"
+	"goRecrypt/curve"
+	"goRecrypt/recrypt"
 )
 
 func main() {
-	aPriKey, aPubKey := goRecrypt.GenerateKeys()
-	bPriKey, bPubKey := goRecrypt.GenerateKeys()
-	cipherText, capsule := goRecrypt.Encrypt("Hello", aPubKey)
+	// Alice Generate Alice key-pair
+	aPriKey, aPubKey, _ := curve.GenerateKeys()
+	// Bob Generate Bob key-pair
+	bPriKey, bPubKey, _ := curve.GenerateKeys()
+	// plain text
+	m := "Hello, Proxy Re-Encryption"
+	fmt.Println("origin message:", m)
+	// Alice encrypts to get cipherText and capsule
+	cipherText, capsule, err := recrypt.Encrypt(m, aPubKey)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println("ciphereText:", cipherText)
-	rk, pubX := goRecrypt.ReKeyGen(aPriKey, bPubKey)
-	newCapsule := goRecrypt.ReEncryption(rk, capsule)
-	key := goRecrypt.RecreateKey(bPriKey, newCapsule, &pubX)
-	plainText := goRecrypt.Decrypt(cipherText, key)
+	// Alice generates re-encryption key
+	rk, pubX, err := recrypt.ReKeyGen(aPriKey, bPubKey)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("rk:", rk)
+	// Server executes re-encrypt
+	newCapsule, errStr := recrypt.ReEncryption(rk, capsule)
+	if errStr != "" {
+		fmt.Println(errStr)
+	}
+	// Bob decrypts the cipherText
+	plainText, err := recrypt.Decrypt(bPriKey, newCapsule, pubX, cipherText)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// get plainText
 	fmt.Println("plainText:", string(plainText))
 }

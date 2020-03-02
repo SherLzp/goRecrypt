@@ -1,4 +1,4 @@
-package goRecrypt
+package curve
 
 import (
 	"crypto/ecdsa"

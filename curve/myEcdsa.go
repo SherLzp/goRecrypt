@@ -1,9 +1,10 @@
-package goRecrypt
+package curve
 
 import (
 	"bytes"
 	"compress/gzip"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/hex"
@@ -11,6 +12,16 @@ import (
 	"strings"
 )
 
+// Generate Private and Public key-pair
+func GenerateKeys() (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, nil, err
+	}
+	return privateKey, &privateKey.PublicKey, nil
+}
+
+// ECDSA Sign
 func Sign(privateKeyStr string, messageHash string) (string, error) {
 	privateKeyBytes, err := hex.DecodeString(privateKeyStr)
 	if err != nil {
@@ -37,6 +48,7 @@ func Sign(privateKeyStr string, messageHash string) (string, error) {
 	return hex.EncodeToString(result.Bytes()), nil
 }
 
+// ECDSA Verify
 func Verify(messageHash, signature string, publicKey string) (bool, error) {
 	publicKeyBytes, err := hex.DecodeString(publicKey)
 	if err != nil {
