@@ -94,7 +94,7 @@ func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	// E' = E^{rk}, V' = V^{rk}
 	capsule.E = curve.PointScalarMul(capsule.E, rk)
 	capsule.V = curve.PointScalarMul(capsule.V, rk)
-	return capsule, ""
+	return capsule, nil
 }
 
 // Recreate the aes key then decrypt the cipherText
