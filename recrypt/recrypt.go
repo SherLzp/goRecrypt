@@ -3,6 +3,7 @@ package recrypt
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"goRecrypt/curve"
 	"goRecrypt/math"
 	"goRecrypt/utils"
@@ -77,7 +78,7 @@ func ReKeyGen(aPriKey *ecdsa.PrivateKey, bPubKey *ecdsa.PublicKey) (*big.Int, *e
 }
 
 // Server executes Re-Encryption method
-func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, string) {
+func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	// check g^s == V * E^{H2(E || V)}
 	x1, y1 := curve.CURVE.ScalarBaseMult(capsule.s.Bytes())
 	tempX, tempY := curve.CURVE.ScalarMult(capsule.E.X, capsule.E.Y,
@@ -88,7 +89,7 @@ func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, string) {
 	x2, y2 := curve.CURVE.Add(capsule.V.X, capsule.V.Y, tempX, tempY)
 	// if check failed return error
 	if x1.Cmp(x2) != 0 && y1.Cmp(y2) != 0 {
-		return nil, "Check Failed"
+		return nil, errors.New("Capsule not match")
 	}
 	// E' = E^{rk}, V' = V^{rk}
 	capsule.E = curve.PointScalarMul(capsule.E, rk)

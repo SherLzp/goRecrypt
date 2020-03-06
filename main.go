@@ -27,9 +27,9 @@ func main() {
 	}
 	fmt.Println("rk:", rk)
 	// Server executes re-encrypt
-	newCapsule, errStr := recrypt.ReEncryption(rk, capsule)
-	if errStr != "" {
-		fmt.Println(errStr)
+	newCapsule, err := recrypt.ReEncryption(rk, capsule)
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 	// Bob decrypts the cipherText
 	plainText, err := recrypt.Decrypt(bPriKey, newCapsule, pubX, cipherText)
