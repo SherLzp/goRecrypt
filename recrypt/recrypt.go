@@ -4,9 +4,9 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
-	"github.com/SherLzp/goRecrypt/curve"
-	"github.com/SherLzp/goRecrypt/math"
-	"github.com/SherLzp/goRecrypt/utils"
+	"goRecrypt/curve"
+	"goRecrypt/math"
+	"goRecrypt/utils"
 	"math/big"
 )
 
