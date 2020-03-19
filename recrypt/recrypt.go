@@ -199,12 +199,12 @@ func EncodeCapsule(capsule Capsule) (capsuleAsBytes []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func DecodeCapsule(capsuleAsBytes []byte) (capsule *Capsule, err error) {
-	capsule = &Capsule{}
+func DecodeCapsule(capsuleAsBytes []byte) (capsule Capsule, err error) {
+	capsule = Capsule{}
 	gob.Register(elliptic.P256())
 	dec := gob.NewDecoder(bytes.NewBuffer(capsuleAsBytes))
-	if err = dec.Decode(capsule); err != nil {
-		return nil, err
+	if err = dec.Decode(&capsule); err != nil {
+		return capsule, err
 	}
 	return capsule, nil
 }
