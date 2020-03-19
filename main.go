@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"goRecrypt/curve"
-	"goRecrypt/recrypt"
+	"github.com/Sherlzp/goRecrypt/curve"
+	"github.com/Sherlzp/goRecrypt/recrypt"
 )
 
 func main() {
