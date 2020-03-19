@@ -3,7 +3,7 @@ package recrypt
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"goRecrypt/curve"
 	"goRecrypt/math"
 	"goRecrypt/utils"
@@ -17,7 +17,7 @@ type Capsule struct {
 }
 
 // Encrypt the message
-// AES + Proxy Re-Encryption
+// AES GCM + Proxy Re-Encryption
 func Encrypt(message string, pubKey *ecdsa.PublicKey) (cipherText string, capsule *Capsule, err error) {
 	s := new(big.Int)
 	// generate E,V key-pairs
@@ -41,6 +41,7 @@ func Encrypt(message string, pubKey *ecdsa.PublicKey) (cipherText string, capsul
 		return "", nil, err
 	}
 	key := hex.EncodeToString(hash)
+	fmt.Println("old key:", key)
 	// use aes gcm algorithm to encrypt
 	// mark hash[:12] as nonce
 	cipherText, err = GCMEncrypt(message, key[:32], hash[:12], nil)
@@ -53,6 +54,14 @@ func Encrypt(message string, pubKey *ecdsa.PublicKey) (cipherText string, capsul
 		s: s,
 	}
 	return cipherText, capsule, nil
+}
+
+func EncryptByStr(message, pubKeyStr string) (cipherText string, capsule *Capsule, err error) {
+	key, err := utils.PublicKeyStrToKey(pubKeyStr)
+	if err != nil {
+		return "", nil, err
+	}
+	return Encrypt(message, key)
 }
 
 // generate re-encryption key and sends it to Server
@@ -77,6 +86,18 @@ func ReKeyGen(aPriKey *ecdsa.PrivateKey, bPubKey *ecdsa.PublicKey) (*big.Int, *e
 	return rk, pubX, nil
 }
 
+func ReKeyGenByStr(aPriKeyStr, bPubKeyStr string) (*big.Int, *ecdsa.PublicKey, error) {
+	aPriKey, err := utils.PrivateKeyStrToKey(aPriKeyStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	bPubKey, err := utils.PublicKeyStrToKey(bPubKeyStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ReKeyGen(aPriKey, bPubKey)
+}
+
 // Server executes Re-Encryption method
 func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	// check g^s == V * E^{H2(E || V)}
@@ -89,12 +110,15 @@ func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	x2, y2 := curve.CURVE.Add(capsule.V.X, capsule.V.Y, tempX, tempY)
 	// if check failed return error
 	if x1.Cmp(x2) != 0 && y1.Cmp(y2) != 0 {
-		return nil, errors.New("Capsule not match")
+		return nil, fmt.Errorf("%s", "Capsule not match")
 	}
 	// E' = E^{rk}, V' = V^{rk}
-	capsule.E = curve.PointScalarMul(capsule.E, rk)
-	capsule.V = curve.PointScalarMul(capsule.V, rk)
-	return capsule, nil
+	newCapsule := &Capsule{
+		E: curve.PointScalarMul(capsule.E, rk),
+		V: curve.PointScalarMul(capsule.V, rk),
+		s: capsule.s,
+	}
+	return newCapsule, nil
 }
 
 // Recreate the aes key then decrypt the cipherText
@@ -123,4 +147,41 @@ func Decrypt(bPriKey *ecdsa.PrivateKey, capsule *Capsule, pubX *ecdsa.PublicKey,
 		return "", err
 	}
 	return plainText, nil
+}
+
+func DecryptByStr(bPriKeyStr string, capsule *Capsule, pubXStr string, cipherText string) (string, error) {
+	bPriKey, err := utils.PrivateKeyStrToKey(bPriKeyStr)
+	if err != nil {
+		return "", err
+	}
+	pubX, err := utils.PublicKeyStrToKey(pubXStr)
+	if err != nil {
+		return "", err
+	}
+	return Decrypt(bPriKey, capsule, pubX, cipherText)
+}
+
+// Decrypt by my own private key
+func DecryptOnMyPriKey(aPriKey *ecdsa.PrivateKey, capsule *Capsule, cipherText string) (string, error) {
+	point1 := curve.PointScalarAdd(capsule.E, capsule.V)
+	point := curve.PointScalarMul(point1, aPriKey.D)
+	// generate aes key
+	hash, err := utils.Sha3Hash(curve.PointToBytes(point))
+	if err != nil {
+		return "", err
+	}
+	key := hex.EncodeToString(hash)
+	fmt.Println("new key:", key)
+	// use aes gcm algorithm to encrypt
+	// mark hash[:12] as nonce
+	plainText, err := GCMDecrypt(cipherText, key[:32], hash[:12], nil)
+	return plainText, err
+}
+
+func DecryptOnMyOwnStrKey(aPriKeyStr string, capsule *Capsule, cipherText string) (string, error) {
+	aPriKey, err := utils.PrivateKeyStrToKey(aPriKeyStr)
+	if err != nil {
+		return "", err
+	}
+	return DecryptOnMyPriKey(aPriKey, capsule, cipherText)
 }

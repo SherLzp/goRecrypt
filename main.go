@@ -36,6 +36,12 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	plainTextByMyPri, err := recrypt.DecryptOnMyPriKey(aPriKey, capsule, cipherText)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("PlainText by my own private key:", string(plainTextByMyPri))
 	// get plainText
 	fmt.Println("plainText:", string(plainText))
 }
