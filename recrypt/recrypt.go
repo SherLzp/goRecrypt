@@ -1,7 +1,10 @@
 package recrypt
 
 import (
+	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"goRecrypt/curve"
@@ -13,7 +16,7 @@ import (
 type Capsule struct {
 	E *ecdsa.PublicKey
 	V *ecdsa.PublicKey
-	s *big.Int
+	S *big.Int
 }
 
 // Encrypt the message
@@ -51,7 +54,7 @@ func Encrypt(message string, pubKey *ecdsa.PublicKey) (cipherText string, capsul
 	capsule = &Capsule{
 		E: pubE,
 		V: pubV,
-		s: s,
+		S: s,
 	}
 	return cipherText, capsule, nil
 }
@@ -101,7 +104,7 @@ func ReKeyGenByStr(aPriKeyStr, bPubKeyStr string) (*big.Int, *ecdsa.PublicKey, e
 // Server executes Re-Encryption method
 func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	// check g^s == V * E^{H2(E || V)}
-	x1, y1 := curve.CURVE.ScalarBaseMult(capsule.s.Bytes())
+	x1, y1 := curve.CURVE.ScalarBaseMult(capsule.S.Bytes())
 	tempX, tempY := curve.CURVE.ScalarMult(capsule.E.X, capsule.E.Y,
 		utils.HashToCurve(
 			utils.ConcatBytes(
@@ -116,7 +119,7 @@ func ReEncryption(rk *big.Int, capsule *Capsule) (*Capsule, error) {
 	newCapsule := &Capsule{
 		E: curve.PointScalarMul(capsule.E, rk),
 		V: curve.PointScalarMul(capsule.V, rk),
-		s: capsule.s,
+		S: capsule.S,
 	}
 	return newCapsule, nil
 }
@@ -184,4 +187,24 @@ func DecryptOnMyOwnStrKey(aPriKeyStr string, capsule *Capsule, cipherText string
 		return "", err
 	}
 	return DecryptOnMyPriKey(aPriKey, capsule, cipherText)
+}
+
+func EncodeCapsule(capsule Capsule) (capsuleAsBytes []byte, err error) {
+	gob.Register(elliptic.P256())
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	if err = enc.Encode(capsule); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func DecodeCapsule(capsuleAsBytes []byte) (capsule *Capsule, err error) {
+	capsule = &Capsule{}
+	gob.Register(elliptic.P256())
+	dec := gob.NewDecoder(bytes.NewBuffer(capsuleAsBytes))
+	if err = dec.Decode(capsule); err != nil {
+		return nil, err
+	}
+	return capsule, nil
 }

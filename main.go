@@ -19,6 +19,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	capsuleAsBytes, err := recrypt.EncodeCapsule(*capsule)
+	if err != nil {
+		fmt.Println("encode error:", err)
+	}
+	capsuleTest, err := recrypt.DecodeCapsule(capsuleAsBytes)
+	if err != nil {
+		fmt.Println("decode error:", err)
+	}
+	fmt.Println("capsule before encode:", capsule)
+	fmt.Println("capsule after decode:", capsuleTest)
 	fmt.Println("ciphereText:", cipherText)
 	// Alice generates re-encryption key
 	rk, pubX, err := recrypt.ReKeyGen(aPriKey, bPubKey)
