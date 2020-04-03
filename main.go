@@ -54,4 +54,17 @@ func main() {
 	fmt.Println("PlainText by my own private key:", string(plainTextByMyPri))
 	// get plainText
 	fmt.Println("plainText:", string(plainText))
+
+	fileCapsule, err := recrypt.EncryptFile("a.txt", "a_encrypt.txt", aPubKey)
+	if err != nil {
+		fmt.Println("File Encrypt Error:", err)
+	}
+	fileNewCapsule, err := recrypt.ReEncryption(rk, fileCapsule)
+	if err != nil {
+		fmt.Println("ReEncryption Error:", err)
+	}
+	err = recrypt.DecryptFile("a_encrypt.txt", "a_decrypt.txt", bPriKey, fileNewCapsule, pubX)
+	if err != nil {
+		fmt.Println("Decrypt Error:", err)
+	}
 }
