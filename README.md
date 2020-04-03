@@ -63,6 +63,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	capsuleAsBytes, err := recrypt.EncodeCapsule(*capsule)
+	if err != nil {
+		fmt.Println("encode error:", err)
+	}
+	capsuleTest, err := recrypt.DecodeCapsule(capsuleAsBytes)
+	if err != nil {
+		fmt.Println("decode error:", err)
+	}
+	fmt.Println("capsule before encode:", capsule)
+	fmt.Println("capsule after decode:", capsuleTest)
 	fmt.Println("ciphereText:", cipherText)
 	// Alice generates re-encryption key
 	rk, pubX, err := recrypt.ReKeyGen(aPriKey, bPubKey)
@@ -80,8 +90,27 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	plainTextByMyPri, err := recrypt.DecryptOnMyPriKey(aPriKey, capsule, cipherText)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("PlainText by my own private key:", string(plainTextByMyPri))
 	// get plainText
 	fmt.Println("plainText:", string(plainText))
+
+	fileCapsule, err := recrypt.EncryptFile("a.txt", "a_encrypt.txt", aPubKey)
+	if err != nil {
+		fmt.Println("File Encrypt Error:", err)
+	}
+	fileNewCapsule, err := recrypt.ReEncryption(rk, fileCapsule)
+	if err != nil {
+		fmt.Println("ReEncryption Error:", err)
+	}
+	err = recrypt.DecryptFile("a_encrypt.txt", "a_decrypt.txt", bPriKey, fileNewCapsule, pubX)
+	if err != nil {
+		fmt.Println("Decrypt Error:", err)
+	}
 }
 ```
 
@@ -89,8 +118,11 @@ func main() {
 
 ```go
 origin message: Hello, Proxy Re-Encryption
-ciphereText: 384896d3ec76ae15b76195154e20ef069d5984d1bbac436d30df928af043106f09b08d50ef7562bf44fa
-rk: 63105820755377318789444476285016130489439585789958062421755769345359288283133
+capsule before encode: &{0xc00006af60 0xc00006af90 57148977540300415262115486025741185922481513775009103033079547516801934630957}
+capsule after decode: {0xc0000ea0c0 0xc0000ea440 57148977540300415262115486025741185922481513775009103033079547516801934630957}
+ciphereText: [86 253 12 148 28 55 88 28 29 24 102 154 207 74 186 228 38 187 250 136 195 231 55 137 34 143 29 145 161 117 217 125 227 233 43 63 182 218 66 181 217 102]
+rk: 102993116644991623703962027935370616042568913513173132988315879311078971457909
+PlainText by my own private key: Hello, Proxy Re-Encryption
 plainText: Hello, Proxy Re-Encryption
 ```
 
