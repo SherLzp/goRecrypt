@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"goRecrypt/curve"
 	"goRecrypt/recrypt"
@@ -30,6 +31,12 @@ func main() {
 	fmt.Println("capsule before encode:", capsule)
 	fmt.Println("capsule after decode:", capsuleTest)
 	fmt.Println("ciphereText:", cipherText)
+	// Test recreate aes key
+	keyBytes, err := recrypt.RecreateAESKeyByMyPriKey(capsule, aPriKey)
+	if err != nil {
+		fmt.Println("Recreate key error:", err)
+	}
+	fmt.Println("recreate key:", hex.EncodeToString(keyBytes))
 	// Alice generates re-encryption key
 	rk, pubX, err := recrypt.ReKeyGen(aPriKey, bPubKey)
 	if err != nil {

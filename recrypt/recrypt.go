@@ -46,6 +46,7 @@ func encryptKeyGen(pubKey *ecdsa.PublicKey) (capsule *Capsule, keyBytes []byte, 
 		V: pubV,
 		S: s,
 	}
+	fmt.Println("old key:", hex.EncodeToString(keyBytes))
 	return capsule, keyBytes, nil
 }
 
@@ -69,11 +70,11 @@ func RecreateAESKeyByMyPriKeyStr(capsule *Capsule, aPriKeyStr string) (keyBytes 
 	return RecreateAESKeyByMyPriKey(capsule, aPriKey)
 }
 
-func EncryptMessageByAESKey(message string, keyBytes []byte) (cipherText []byte, err error) {
+func EncryptMessageByAESKey(message []byte, keyBytes []byte) (cipherText []byte, err error) {
 	key := hex.EncodeToString(keyBytes)
 	// use aes gcm algorithm to encrypt
 	// mark keyBytes[:12] as nonce
-	cipherText, err = GCMEncrypt([]byte(message), key[:32], keyBytes[:12], nil)
+	cipherText, err = GCMEncrypt(message, key[:32], keyBytes[:12], nil)
 	if err != nil {
 		return nil, err
 	}
